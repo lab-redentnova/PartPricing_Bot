@@ -76,22 +76,55 @@ st.markdown(f"**Current Machine:** `{st.sidebar.selectbox('Switch Printer', list
 machine_choice = st.session_state.main_select
 config = MACHINE_DATA[machine_choice]
 
-# --- TWO COLUMN INPUT ---
-col1, col2 = st.columns([2, 1], gap="large")
+# --- INPUTS ---
+col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("📋 Part Details")
-    c1, c2 = st.columns(2)
-    qty = c1.number_input("Quantity", min_value=1, value=1)
-    weight = c2.number_input("Weight/Volume (g/ml)", min_value=1.0, value=50.0)
+    st.subheader("📊 Slicer Data")
+    qty = st.number_input("Number of Items", min_value=1, value=1)
     
-    t1, t2 = st.columns(2)
-    print_time = t1.number_input("Print Time (Hours per part)", min_value=0.1, value=4.0)
-    labor_mins = t2.number_input("Labor (Minutes per batch)", value=20)
+    # This is the key input from the Slicer (PrusaSlicer / PreForm)
+    slicer_weight = st.number_input(
+        "Material Required per Part (from Slicer in g or ml)", 
+        min_value=0.1, 
+        help="Check the 'Sliced Info' box in your slicer software for the total filament/resin usage."
+    )
+    
+    print_time = st.number_input("Print Time per Part (Hours)", min_value=0.1, value=2.0)
 
 with col2:
-    st.subheader("")
-    mat_cost = st.number_input("Material €/kg or €/L", value=config["default_material"])
+    st.subheader("⚙️ Production Prep")
+    labor_mins = st.number_input("Manual Labor per Batch (Setup + Cleanup in mins)", value=15)
+    
+    # We add a small 3% buffer for 'invisible' waste (purging, stringing, etc.)
+    waste_buffer = 1.03 
+
+# --- UPDATED CALCULATIONS ---
+
+# 1. Material Cost: Based on Slicer data + Waste Buffer
+# formula: (grams / 1000) * price_per_kg * 1.03
+unit_mat_cost = (slicer_weight / 1000) * mat["price"] * waste_buffer
+
+# 2. Electricity: (Watts / 1000) * Hours * €/kWh
+unit_elec_cost = (spec["watts"] / 1000) * print_time * ELEC_PRICE_KWH
+
+# 3. Machine Wear/Depreciation
+unit_wear_cost = print_time * spec["wear"]
+
+# 4. Labor (calculated per unit)
+unit_labor_cost = ((labor_mins / 60) * LABOR_RATE_DE) / qty
+
+# --- FINAL SUMMATION ---
+unit_total = unit_mat_cost + unit_elec_cost + unit_wear_cost + unit_labor_cost
+total_project = unit_total * qty
+
+# Add the Risk Factor (from your slider)
+risk_multiplier = 1 + (base_risk * mat["risk_mod"])
+total_with_risk = total_project * risk_multiplier
+
+# Volume Discount for 100+ items
+if qty >= 100:
+    total_with_risk *= 0.85
 
 # --- CALCULATIONS ---
 unit_mat = (weight / 1000) * mat_cost * (1 + config["waste"])
