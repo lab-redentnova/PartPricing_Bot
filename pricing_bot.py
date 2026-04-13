@@ -25,7 +25,7 @@ MATERIAL_PRICES = {
 st.set_page_config(page_title="In-House Pricing Bot", layout="wide")
 
 try:
-    st.image("logo.png", width=200)
+    st.image("logo.png", width=350)
 except:
     pass # Silently skip if logo isn't there
 
