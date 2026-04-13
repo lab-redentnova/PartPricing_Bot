@@ -3,11 +3,65 @@ import streamlit as st
 # --- SETTINGS ---
 LABOR_RATE_DE = 35.00 
 
-MACHINE_DATA = {
-    "Prusa XL (FDM)": {"hourly_rate": 1.50, "default_material": 30.0, "waste": 0.05, "desc": "Reliable FDM for functional parts."},
-    "Ultimaker (FDM)": {"hourly_rate": 2.20, "default_material": 50.0, "waste": 0.05, "desc": "High-precision FDM for prototypes."},
-    "Formlabs (SLA)": {"hourly_rate": 4.50, "default_material": 180.0, "waste": 0.15, "desc": "Resin-based for high detail/smooth finish."}
+import streamlit as st
+
+# --- CONFIGURATION ---
+ELEC_PRICE_KWH = 0.30  # Average Euro price in Germany 2024-2026
+LABOR_RATE_DE = 35.00 
+
+# Machine Specifics: {Hourly Wear/Depreciation, Avg Wattage (Watts)}
+MACHINE_SPECS = {
+    "Prusa XL (FDM)": {"wear": 1.20, "watts": 300},
+    "Ultimaker (FDM)": {"wear": 1.80, "watts": 250},
+    "Formlabs (SLA)": {"wear": 4.00, "watts": 60}
 }
+
+# Material Specifics: {Price/kg, Risk Multiplier}
+MATERIAL_DATA = {
+    "PLA (Basic)": {"price": 25.0, "risk_mod": 1.0},
+    "PC (High Temp)": {"price": 60.0, "risk_mod": 1.5},
+    "Carbon Fiber": {"price": 90.0, "risk_mod": 1.8},
+    "Rigid 4000 (SLA)": {"price": 220.0, "risk_mod": 1.2},
+    "Tough 2000 (SLA)": {"price": 190.0, "risk_mod": 1.3},
+    "Clear Resin (SLA)": {"price": 170.0, "risk_mod": 1.1}
+}
+
+# ... (UI Setup code with Logo remains the same) ...
+
+# --- INPUTS ---
+with st.sidebar:
+    printer = st.selectbox("Select Printer", list(MACHINE_SPECS.keys()))
+    # Filter materials based on printer type
+    if "SLA" in printer:
+        valid_mats = ["Rigid 4000 (SLA)", "Tough 2000 (SLA)", "Clear Resin (SLA)"]
+    else:
+        valid_mats = ["PLA (Basic)", "PC (High Temp)", "Carbon Fiber"]
+    
+    mat_type = st.selectbox("Material Type", valid_mats)
+
+# --- NEW CALCULATIONS ---
+spec = MACHINE_SPECS[printer]
+mat = MATERIAL_DATA[mat_type]
+
+# 1. Precise Electricity Cost
+# (Watts / 1000) * Hours * Price_Per_kWh
+elec_cost_per_part = (spec["watts"] / 1000) * print_time * ELEC_PRICE_KWH
+
+# 2. Material Cost + Machine Wear
+unit_mat_cost = (weight / 1000) * mat["price"]
+unit_wear_cost = print_time * spec["wear"]
+
+# 3. Dynamic Risk (Base Risk * Material Difficulty)
+base_risk = st.slider("Base Failure Risk %", 0, 50, 10) / 100
+final_risk_factor = base_risk * mat["risk_mod"]
+
+# 4. Total Calculation
+unit_subtotal = unit_mat_cost + unit_wear_cost + elec_cost_per_part + unit_labor
+total_final = (unit_subtotal * qty) * (1 + final_risk_factor)
+
+# Apply Volume Discount if > 100
+if qty >= 100:
+    total_final *= 0.85
 
 st.set_page_config(page_title="DE-Print Assistant", layout="wide")
 
