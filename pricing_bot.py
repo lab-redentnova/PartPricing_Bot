@@ -2,7 +2,7 @@ import streamlit as st
 
 # --- 1. FIXED COMPANY CONSTANTS (GERMANY) ---
 ELEC_PRICE_KWH = 0.30  # €/kWh
-LABOR_RATE_DE = 35.00  # €/hour
+LABOR_RATE_DE = 18.00  # €/hour
 
 # Machine Specifics: {Hourly Wear/Depreciation, Avg Wattage}
 MACHINE_SPECS = {
