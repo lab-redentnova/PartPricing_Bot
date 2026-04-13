@@ -52,7 +52,7 @@ with col2:
     qty = st.number_input("Number of Items", min_value=1, value=1)
     slicer_weight = st.number_input("Material per Part (g or ml)", min_value=0.1, value=10.0)
     print_time = st.number_input("Print Time per Part (Hours)", min_value=0.1, value=1.0)
-    labor_mins = st.number_input("Labor per Batch (Minutes)", value=15)
+    labor_mins = st.number_input("PostProcessing per Batch (Minutes)", value=15)
 
 # --- 4. CALCULATION LOGIC ---
 spec = MACHINE_SPECS[printer]
