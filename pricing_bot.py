@@ -13,12 +13,13 @@ MACHINE_SPECS = {
 
 # Fixed Material Prices (Price per 1kg or 1L)
 MATERIAL_PRICES = {
-    "PLA (Basic)": 25.00,
-    "PC (High Temp)": 65.00,
-    "Carbon Fiber": 95.00,
-    "Rigid 4000 (SLA)": 220.00,
-    "Tough 2000 (SLA)": 195.00,
-    "Clear Resin (SLA)": 175.00
+    "PETG (Basic)": 16.60,
+    "PC (High Temp)": 30.49,
+    "Carbon Fiber": 50.00,
+    "Rigid 4000 (SLA)": 236.81,
+    "Rigid 10000 (SLA)": 355.81,
+    "Tough 2000 (SLA)": 208.25,
+    "Clear Resin (SLA)": 166.60
 }
 
 # --- 2. UI SETUP ---
