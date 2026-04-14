@@ -19,7 +19,6 @@ MATERIAL_PRICES = {
 }
 
 # --- 2. SESSION STATE SETUP ---
-# This acts as our "Temporary Database" for the current session
 if 'quote_history' not in st.session_state:
     st.session_state.quote_history = []
 
@@ -34,10 +33,11 @@ except:
 st.title("🤖 3D Print Pricing Assistant")
 st.divider()
 
-# --- 4. INPUT SECTION ---
+# --- 4. INPUT SECTION (Part Name & Number) ---
 with st.container():
-    col_part, col_machine = st.columns(2)
-    part_name = col_part.text_input("Part Name / ID", value="Unnamed Part")
+    col_name, col_num, col_machine = st.columns([2, 1, 1])
+    part_name = col_name.text_input("Part Name", value="Bracket A")
+    part_number = col_num.text_input("Part Number", value="PN-001")
     printer = col_machine.selectbox("Select Printer", list(MACHINE_SPECS.keys()))
 
 st.subheader("📊 Production Details")
@@ -55,7 +55,6 @@ with c2:
     h_col, m_col = st.columns(2)
     h_in = h_col.number_input("Hours", min_value=0, value=1, key="hr")
     m_in = m_col.number_input("Minutes", min_value=0, max_value=59, value=0, key="min")
-    # Convert to decimal hours for math
     print_time_decimal = h_in + (m_in / 60)
 
 with c3:
@@ -82,11 +81,14 @@ r1, r2 = st.columns([1, 1])
 r1.metric("Total Project Quote", f"€{total_project:.2f}")
 r2.metric("Price per Unit", f"€{(total_project/qty):.2f}")
 
+# Button to save the data
 if st.button("➕ Save Quote to Session Log"):
     new_entry = {
-        "Timestamp": datetime.now().strftime("%H:%M:%S"),
+        "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "Part Name": part_name,
+        "Part Number": part_number,
         "Printer": printer,
+        "Material": mat_type,
         "Qty": qty,
         "Total Price (€)": round(total_project, 2),
         "Unit Price (€)": round(total_project/qty, 2),
@@ -95,7 +97,7 @@ if st.button("➕ Save Quote to Session Log"):
         "Labor Cost": round(unit_labor_cost, 2)
     }
     st.session_state.quote_history.append(new_entry)
-    st.toast(f"Saved {part_name} to log!")
+    st.toast(f"Saved {part_name} ({part_number}) to log!")
 
 # --- 7. THE LOG TABLE ---
 if st.session_state.quote_history:
@@ -103,7 +105,6 @@ if st.session_state.quote_history:
     df = pd.DataFrame(st.session_state.quote_history)
     st.dataframe(df, use_container_width=True)
     
-    # Download as CSV (Excel compatible)
     csv = df.to_csv(index=False).encode('utf-8')
     st.download_button(
         label="📥 Download Log as CSV (Excel)",
@@ -111,3 +112,4 @@ if st.session_state.quote_history:
         file_name=f"print_quotes_{datetime.now().strftime('%Y-%m-%d')}.csv",
         mime="text/csv",
     )
+    
